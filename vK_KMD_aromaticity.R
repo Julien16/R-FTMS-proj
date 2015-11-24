@@ -3,28 +3,20 @@ formcalc_raw <- read.table("C_634_FORMULAE.dat",skip=15,header=T)
 library(extremevalues)
 library(plyr)
 library(ggplot2)
-#here adapted to the molecular constraints: Hx-C100-O80-N2-S1_________####
-attach(formcalc_raw)
-mol_type <- ifelse(C>=1 & HIon>=1 & O>=1 & N==0 & S==0, "CHO",
-                   ifelse(C>=1 & HIon>=1 & O>=1 & N==1 & S==0, "CHON",
-                          ifelse(C>=1 & HIon>=1 & O>=1 & N==0 & S==1, "CHOS",
-                                 ifelse(C>=1 & HIon>=1 & O>=1 & N==1 & S==1, "CHONS",
-                                        ifelse(C>=1 & HIon>=1 & O>=1 & N==2 & S==0, "CHON2",
-                                               ifelse(C>=1 & HIon>=1 & O>=1 & N==2 & S==1, "CHON2S", NA)
-                                        )
-                                 )
-                          )
-                   )
-)
+source("classify_mol.R")
 
+#here adapted to the molecular constraints: Hx-C100-O80-N2-S1_________####
+mol_type <- classify_mol(formcalc_raw)
+
+attach(formcalc_raw)
 HC <- HIon/C
 OC <- O/C
 NC <- N/C
 detach(formcalc_raw)
 
 #________________________Check high Intensity_____________####
-L<-getOutliers(formcalc_raw$Intensity, method="I", distribution="lognormal")
-#outlierPlot(formcalc_raw$Intensity, L, mode="qq")
+L <- getOutliers(formcalc_raw$Intensity, method="I", distribution="lognormal")
+# outlierPlot(formcalc_raw$Intensity, L, mode="qq")
 #L$iRight
 #L$limit['Right']
 #________________________N=0, mass even: N0_mass_even_____####
@@ -41,6 +33,7 @@ Nregel <- 1
 #set OtoC_min & OtoC_max
 #set Intensity min & max
 #set ExpMass min & max
+
 OtoC_min <- 0
 OtoC_max <- 1
 Intensity_Min <- 0
@@ -54,6 +47,8 @@ zahler1 <- ifelse(OC<OtoC_max,
        ifelse(formcalc_raw$ExpMass<ExpMass_Max,
       ifelse(formcalc_raw$ExpMass>ExpMass_Min,1
      ,0),0),0),0),0),0)
+
+
 #________________________Zahler 2_________________________####
 #set DBEtoC_min & DBEtoC_max & OplusNtoC_max
 DBEtoC_min <- 0
