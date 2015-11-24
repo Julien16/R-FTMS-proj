@@ -5,6 +5,8 @@ library(plyr)
 library(ggplot2)
 source("classify_mol.R")
 source("zahler_1.R")
+source("zahler_2.R")
+source("zahler_3.R")
 
 #here adapted to the molecular constraints: Hx-C100-O80-N2-S1_________####
 mol_type <- classify_mol(formcalc_raw)
@@ -39,20 +41,14 @@ zahler1 <- zahler_1(formcalc_raw,
 
 #________________________Zahler 2_________________________####
 #set DBEtoC_min & DBEtoC_max & OplusNtoC_max
-
 zahler2 <- zahler_2(formcalc_raw, DBEtoC_min = 0, DBEtoC_max = 5, OplusNtoC_max = 3)
 
-attach(formcalc_raw)
+
 #________________________Zahler 3_________________________####
 #set AI min & max
-AI_max <- 1
-AI_min <- -20
-zahler3 <- ifelse((C-O-N)==0, 1,
-          ifelse(((1+C-O-0.5*HIon)/(C-O-N))<AI_max,
-         ifelse(((1+C-O-0.5*HIon)/(C-O-N))>AI_min,
-        ifelse(N/C<=NtoC_max,1
-       ,0),0),0))
+zahler3 <- zahler_3(formcalc_raw, AI_max = 1, AI_min = -20)
 
+attach(formcalc_raw)
 #________________________H/C charge condition:HCcc________####
 #set charge... I write this way to obtain a vector with the right length.
 charge <- ifelse(formcalc_raw$ExpMass!=0,-1,0)
