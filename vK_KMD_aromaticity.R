@@ -39,18 +39,8 @@ zahler1 <- zahler_1(formcalc_raw,
 
 #________________________Zahler 2_________________________####
 #set DBEtoC_min & DBEtoC_max & OplusNtoC_max
-zahler_2 <- function(data, DBEtoC_min = 0, DBEtoC_max = 5, OplusNtoC_max = 3) {
-  attach(data)
-  zahler2 <- ifelse((1+0.5*(2*C-HIon+N))/C<DBEtoC_max,
-                    ifelse((1+0.5*(2*C-HIon+N))/C>DBEtoC_min,
-                           ifelse((O+N)/C<OplusNtoC_max,
-                                  ifelse(C>5,1
-                                         ,0),0),0),0)
-  detach(data)
-  return(zahler2)
-}
 
-zahler2 <- zahler_2(formcalc_raw)
+zahler2 <- zahler_2(formcalc_raw, DBEtoC_min = 0, DBEtoC_max = 5, OplusNtoC_max = 3)
 
 attach(formcalc_raw)
 #________________________Zahler 3_________________________####
