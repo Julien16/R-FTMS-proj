@@ -1,4 +1,4 @@
-#@ Function to classify molecules from raw FTMS data
+#' Function to classify molecules from raw FTMS data
 
 classify_mol <- function(data) {
   attach(data)

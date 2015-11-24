@@ -4,6 +4,7 @@ library(extremevalues)
 library(plyr)
 library(ggplot2)
 source("classify_mol.R")
+source("zahler_1.R")
 
 #here adapted to the molecular constraints: Hx-C100-O80-N2-S1_________####
 mol_type <- classify_mol(formcalc_raw)
@@ -30,24 +31,10 @@ N0_mass_even <- ifelse(NtoC_max==0 ,
 #________________________Nregel___________________________####
 Nregel <- 1
 #________________________Zahler 1_________________________####
-#set OtoC_min & OtoC_max
-#set Intensity min & max
-#set ExpMass min & max
-
-OtoC_min <- 0
-OtoC_max <- 1
-Intensity_Min <- 0
-Intensity_Max <- L$limit['Right']
-ExpMass_Min <- 149
-ExpMass_Max <- 800
-zahler1 <- ifelse(OC<OtoC_max,
-          ifelse(OC>OtoC_min,
-         ifelse(formcalc_raw$Intensity<Intensity_Max,
-        ifelse(formcalc_raw$Intensity>Intensity_Min,
-       ifelse(formcalc_raw$ExpMass<ExpMass_Max,
-      ifelse(formcalc_raw$ExpMass>ExpMass_Min,1
-     ,0),0),0),0),0),0)
-
+zahler1 <- zahler1(formcalc_raw,
+                   Intensity_Max = L$limit['Right'],
+                   Intensity = formcalc_raw$Intensity, 
+                   OC = formcalc_raw$O/formcalc_raw$C)
 
 #________________________Zahler 2_________________________####
 #set DBEtoC_min & DBEtoC_max & OplusNtoC_max
