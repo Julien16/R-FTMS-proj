@@ -20,6 +20,7 @@ L <- getOutliers(formcalc_raw$Intensity, method="I", distribution="lognormal")
 # outlierPlot(formcalc_raw$Intensity, L, mode="qq")
 #L$iRight
 #L$limit['Right']
+
 #________________________N=0, mass even: N0_mass_even_____####
 #set NtoC_max
 NtoC_max <- 1
