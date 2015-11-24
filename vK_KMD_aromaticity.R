@@ -43,7 +43,6 @@ zahler1 <- zahler_1(formcalc_raw,
 #set DBEtoC_min & DBEtoC_max & OplusNtoC_max
 zahler2 <- zahler_2(formcalc_raw, DBEtoC_min = 0, DBEtoC_max = 5, OplusNtoC_max = 3)
 
-
 #________________________Zahler 3_________________________####
 #set AI min & max
 zahler3 <- zahler_3(formcalc_raw, AI_max = 1, AI_min = -20)

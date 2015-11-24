@@ -10,10 +10,12 @@ zahler_3 <- function(data, AI_max = NULL, AI_min = NULL) {
   }
   
   attach(data)
-  hler3 <- ifelse((C-O-N)==0, 1,
+  zahler3 <- ifelse((C-O-N)==0, 1,
                   ifelse(((1+C-O-0.5*HIon)/(C-O-N))<AI_max,
                          ifelse(((1+C-O-0.5*HIon)/(C-O-N))>AI_min,
                                 ifelse(N/C<=NtoC_max,1
                                        ,0),0),0))
   detach(data)
+  
+  return(zahler3)
 }
