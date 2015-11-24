@@ -4,30 +4,24 @@ library(extremevalues)
 library(plyr)
 library(ggplot2)
 #here adapted to the molecular constraints: Hx-C100-O80-N2-S1_________####
-H <- formcalc_raw$HIon
-C <- formcalc_raw$C
-O <- formcalc_raw$O
-N <- formcalc_raw$N
-S <- formcalc_raw$S
+attach(formcalc_raw)
+mol_type <- ifelse(C>=1 & HIon>=1 & O>=1 & N==0 & S==0, "CHO",
+                   ifelse(C>=1 & HIon>=1 & O>=1 & N==1 & S==0, "CHON",
+                          ifelse(C>=1 & HIon>=1 & O>=1 & N==0 & S==1, "CHOS",
+                                 ifelse(C>=1 & HIon>=1 & O>=1 & N==1 & S==1, "CHONS",
+                                        ifelse(C>=1 & HIon>=1 & O>=1 & N==2 & S==0, "CHON2",
+                                               ifelse(C>=1 & HIon>=1 & O>=1 & N==2 & S==1, "CHON2S", NA)
+                                        )
+                                 )
+                          )
+                   )
+)
 
-CHO <- (C>=1 & H>=1 & O>=1 & N==0 & S==0)
-CHON <- (C>=1 & H>=1 & O>=1 & N==1 & S==0)
-CHOS <- (C>=1 & H>=1 & O>=1 & N==0 & S==1)
-CHONS <- (C>=1 & H>=1 & O>=1 & N==1 & S==1)
-CHON2 <- (C>=1 & H>=1 & O>=1 & N==2 & S==0)
-CHON2S <- (C>=1 & H>=1 & O>=1 & N==2 & S==1)
-
-mol_type <- ifelse(CHO==T , "CHO", 
-           ifelse(CHON==T, "CHON",
-          ifelse(CHOS==T, "CHOS",
-         ifelse(CHONS==T, "CHONS",
-        ifelse(CHON2==T, "CHON2",
-       ifelse(CHON2S==T, "CHON2S", NA)
-      )))))
-
-HC <- H/C
+HC <- HIon/C
 OC <- O/C
 NC <- N/C
+detach(formcalc_raw)
+
 #________________________Check high Intensity_____________####
 L<-getOutliers(formcalc_raw$Intensity, method="I", distribution="lognormal")
 #outlierPlot(formcalc_raw$Intensity, L, mode="qq")
@@ -65,25 +59,28 @@ zahler1 <- ifelse(OC<OtoC_max,
 DBEtoC_min <- 0
 DBEtoC_max <- 5
 OplusNtoC_max <- 3
-zahler2 <- ifelse((1+0.5*(2*C-H+N))/C<DBEtoC_max,
-          ifelse((1+0.5*(2*C-H+N))/C>DBEtoC_min,
+attach(formcalc_raw)
+zahler2 <- ifelse((1+0.5*(2*C-HIon+N))/C<DBEtoC_max,
+          ifelse((1+0.5*(2*C-HIon+N))/C>DBEtoC_min,
          ifelse((O+N)/C<OplusNtoC_max,
         ifelse(C>5,1
        ,0),0),0),0)
+
 #________________________Zahler 3_________________________####
 #set AI min & max
 AI_max <- 1
 AI_min <- -20
 zahler3 <- ifelse((C-O-N)==0, 1,
-          ifelse(((1+C-O-0.5*H)/(C-O-N))<AI_max,
-         ifelse(((1+C-O-0.5*H)/(C-O-N))>AI_min,
+          ifelse(((1+C-O-0.5*HIon)/(C-O-N))<AI_max,
+         ifelse(((1+C-O-0.5*HIon)/(C-O-N))>AI_min,
         ifelse(N/C<=NtoC_max,1
        ,0),0),0))
+
 #________________________H/C charge condition:HCcc________####
 #set charge... I write this way to obtain a vector with the right length.
 charge <- ifelse(formcalc_raw$ExpMass!=0,-1,0)
 HCcc <- ifelse(Nregel*zahler1*zahler2*zahler3==1,
-    ifelse(charge==(-1),((H+1)/C),((H-1)/C))
+    ifelse(charge==(-1),((HIon+1)/C),((HIon-1)/C))
        ,0)
 #________________________H/C filtered: HCf________________####
 #set HC_min & HC_max
@@ -98,13 +95,13 @@ OCf <- ifelse(Nregel*zahler1*zahler2*zahler3==1,OC,0)
 NCf <- ifelse(Nregel*zahler1*zahler2*zahler3==1,NC,0)  
 #________________________DBE______________________________####
 dbe <- ifelse(HCf>0,
-      ifelse(Nregel*zahler1*zahler2*zahler3==1,(1+0.5*(2*C-H+N-1)),0)
+      ifelse(Nregel*zahler1*zahler2*zahler3==1,(1+0.5*(2*C-HIon+N-1)),0)
          ,0)
 #________________________AI_______________________________####
 AI <- ifelse((C-O-N-S)>0,
-     ifelse((1+C-O-0.5*(H+1)-S)>0,
+     ifelse((1+C-O-0.5*(HIon+1)-S)>0,
     ifelse(HCf>0,
-   ifelse(Nregel*zahler1*zahler2*zahler3==1,(1+C-O-0.5*(H+1)-S)/(C-O-N-S),0)
+   ifelse(Nregel*zahler1*zahler2*zahler3==1,(1+C-O-0.5*(HIon+1)-S)/(C-O-N-S),0)
          ,0),0),0)
 #________________________Xc_______________________________####
 #set m & n values
@@ -142,6 +139,7 @@ dfVK_filter <- subset(
                 OCf!=0),
               HCf!=0),
               NCf<1)
+detach(formcalc_raw)
 #____________________________Graph_1:Mass spectra_____________________####
  
 ggplot(formcalc_raw, aes(x=ExpMass, y=Intensity)) + 
@@ -264,7 +262,6 @@ ggplot(dfVK_filter, aes(x=nommass_COO, y=kmd_COO, color=mol_type, size=Intensity
   geom_point() + 
   scale_colour_manual(values=c("royalblue1", "darkorange1", "darkorange3",
                                "darkred", "red", "forestgreen"))
-
 
 
 
