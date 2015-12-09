@@ -4,9 +4,9 @@ library(extremevalues)
 library(plyr)
 library(ggplot2)
 source("classify_mol.R")
-source("zahler_1.R")
-source("zahler_2.R")
-source("zahler_3.R")
+source("filter_1.R")
+source("filter_2.R")
+source("filter_3.R")
 
 #here adapted to the molecular constraints: Hx-C100-O80-N2-S1_________####
 mol_type <- classify_mol(formcalc_raw)
@@ -33,25 +33,25 @@ N0_mass_even <- ifelse(NtoC_max==0 ,
                       1)
 #________________________Nregel___________________________####
 Nregel <- 1
-#________________________Zahler 1_________________________####
-zahler1 <- zahler_1(formcalc_raw,
+#________________________filter 1_________________________####
+filter1 <- filter_1(formcalc_raw,
                    Intensity_Max = L$limit['Right'],
                    Intensity = formcalc_raw$Intensity, 
                    OC = formcalc_raw$O/formcalc_raw$C)
 
-#________________________Zahler 2_________________________####
+#________________________filter 2_________________________####
 #set DBEtoC_min & DBEtoC_max & OplusNtoC_max
-zahler2 <- zahler_2(formcalc_raw, DBEtoC_min = 0, DBEtoC_max = 5, OplusNtoC_max = 3)
+filter2 <- filter_2(formcalc_raw, DBEtoC_min = 0, DBEtoC_max = 5, OplusNtoC_max = 3)
 
-#________________________Zahler 3_________________________####
+#________________________filter 3_________________________####
 #set AI min & max
-zahler3 <- zahler_3(formcalc_raw, AI_max = 1, AI_min = -20)
+filter3 <- filter_3(formcalc_raw, AI_max = 1, AI_min = -20)
 
 attach(formcalc_raw)
 #________________________H/C charge condition:HCcc________####
 #set charge... I write this way to obtain a vector with the right length.
 charge <- ifelse(formcalc_raw$ExpMass!=0,-1,0)
-HCcc <- ifelse(Nregel*zahler1*zahler2*zahler3==1,
+HCcc <- ifelse(Nregel*filter1*filter2*filter3==1,
     ifelse(charge==(-1),((HIon+1)/C),((HIon-1)/C))
        ,0)
 #________________________H/C filtered: HCf________________####
@@ -62,18 +62,18 @@ HCf <- ifelse(HCcc<HC_max,
     ifelse(HCcc>HC_min,HCcc,0)
     ,0)
 #________________________O/C filtered: OCf________________####
-OCf <- ifelse(Nregel*zahler1*zahler2*zahler3==1,OC,0)
+OCf <- ifelse(Nregel*filter1*filter2*filter3==1,OC,0)
 #________________________N/C filtered: NCf________________####
-NCf <- ifelse(Nregel*zahler1*zahler2*zahler3==1,NC,0)  
+NCf <- ifelse(Nregel*filter1*filter2*filter3==1,NC,0)  
 #________________________DBE______________________________####
 dbe <- ifelse(HCf>0,
-      ifelse(Nregel*zahler1*zahler2*zahler3==1,(1+0.5*(2*C-HIon+N-1)),0)
+      ifelse(Nregel*filter1*filter2*filter3==1,(1+0.5*(2*C-HIon+N-1)),0)
          ,0)
 #________________________AI_______________________________####
 AI <- ifelse((C-O-N-S)>0,
      ifelse((1+C-O-0.5*(HIon+1)-S)>0,
     ifelse(HCf>0,
-   ifelse(Nregel*zahler1*zahler2*zahler3==1,(1+C-O-0.5*(HIon+1)-S)/(C-O-N-S),0)
+   ifelse(Nregel*filter1*filter2*filter3==1,(1+C-O-0.5*(HIon+1)-S)/(C-O-N-S),0)
          ,0),0),0)
 #________________________Xc_______________________________####
 #set m & n values
@@ -82,21 +82,21 @@ n <- 1
 Xc <- ifelse((3*(dbe-(m*O+n*S))-1)/(dbe-(m*O+n*S))<=0,0,
              ifelse(dbe<=(m*O+n*S),0,(3*(dbe-(m*O+n*S))-1)/(dbe-(m*O+n*S))))
 #________________________KMD______________________________####
-nommass <- ifelse(HCcc==0,0,ifelse(Nregel*zahler1*zahler2*zahler3==1,
+nommass <- ifelse(HCcc==0,0,ifelse(Nregel*filter1*filter2*filter3==1,
                                    floor(formcalc_raw$ExpMass),0))
-kmd <- ifelse(HCcc==0,0,ifelse(Nregel*zahler1*zahler2*zahler3==1,
+kmd <- ifelse(HCcc==0,0,ifelse(Nregel*filter1*filter2*filter3==1,
                                formcalc_raw$ExpMass-nommass,0))
 #________________________KMD CH2__________________________####
 km_CH2 <- (formcalc_raw$ExpMass+1.007825-0.000549)*14/14.01565
-nommass_CH2 <- ifelse(Nregel*zahler1*zahler2*zahler3==1,
+nommass_CH2 <- ifelse(Nregel*filter1*filter2*filter3==1,
                       ifelse(HCcc==0,0,ceiling(km_CH2)),0)
-kmd_CH2 <- ifelse(Nregel*zahler1*zahler2*zahler3==1,
+kmd_CH2 <- ifelse(Nregel*filter1*filter2*filter3==1,
                   ifelse(HCcc==0,0,(nommass_CH2-km_CH2)),0)
 #________________________KMD COO__________________________####
 km_COO <- (formcalc_raw$ExpMass+1.007825-0.000549)*44/43.989829
-nommass_COO <- ifelse(Nregel*zahler1*zahler2*zahler3==1,
+nommass_COO <- ifelse(Nregel*filter1*filter2*filter3==1,
                       ifelse(HCcc==0,0,ceiling(km_COO)),0)
-kmd_COO <- ifelse(Nregel*zahler1*zahler2*zahler3==1,
+kmd_COO <- ifelse(Nregel*filter1*filter2*filter3==1,
                   ifelse(HCcc==0,0,(nommass_COO-km_COO)),0)
 #________________________compile in dataframe_____________####
 dfVK_raw <- data.frame(formcalc_raw, mol_type, 
