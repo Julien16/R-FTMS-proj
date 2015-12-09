@@ -3,36 +3,26 @@ formcalc_raw <- read.table("C_634_FORMULAE.dat",skip=15,header=T)
 library(extremevalues)
 library(plyr)
 library(ggplot2)
+source("classify_mol.R")
+source("zahler_1.R")
+source("zahler_2.R")
+source("zahler_3.R")
+
 #here adapted to the molecular constraints: Hx-C100-O80-N2-S1_________####
-H <- formcalc_raw$HIon
-C <- formcalc_raw$C
-O <- formcalc_raw$O
-N <- formcalc_raw$N
-S <- formcalc_raw$S
+mol_type <- classify_mol(formcalc_raw)
 
-CHO <- (C>=1 & H>=1 & O>=1 & N==0 & S==0)
-CHON <- (C>=1 & H>=1 & O>=1 & N==1 & S==0)
-CHOS <- (C>=1 & H>=1 & O>=1 & N==0 & S==1)
-CHONS <- (C>=1 & H>=1 & O>=1 & N==1 & S==1)
-CHON2 <- (C>=1 & H>=1 & O>=1 & N==2 & S==0)
-CHON2S <- (C>=1 & H>=1 & O>=1 & N==2 & S==1)
-
-mol_type <- ifelse(CHO==T , "CHO", 
-           ifelse(CHON==T, "CHON",
-          ifelse(CHOS==T, "CHOS",
-         ifelse(CHONS==T, "CHONS",
-        ifelse(CHON2==T, "CHON2",
-       ifelse(CHON2S==T, "CHON2S", NA)
-      )))))
-
-HC <- H/C
+attach(formcalc_raw)
+HC <- HIon/C
 OC <- O/C
 NC <- N/C
+detach(formcalc_raw)
+
 #________________________Check high Intensity_____________####
-L<-getOutliers(formcalc_raw$Intensity, method="I", distribution="lognormal")
-#outlierPlot(formcalc_raw$Intensity, L, mode="qq")
+L <- getOutliers(formcalc_raw$Intensity, method="I", distribution="lognormal")
+# outlierPlot(formcalc_raw$Intensity, L, mode="qq")
 #L$iRight
 #L$limit['Right']
+
 #________________________N=0, mass even: N0_mass_even_____####
 #set NtoC_max
 NtoC_max <- 1
@@ -44,46 +34,25 @@ N0_mass_even <- ifelse(NtoC_max==0 ,
 #________________________Nregel___________________________####
 Nregel <- 1
 #________________________Zahler 1_________________________####
-#set OtoC_min & OtoC_max
-#set Intensity min & max
-#set ExpMass min & max
-OtoC_min <- 0
-OtoC_max <- 1
-Intensity_Min <- 0
-Intensity_Max <- L$limit['Right']
-ExpMass_Min <- 149
-ExpMass_Max <- 800
-zahler1 <- ifelse(OC<OtoC_max,
-          ifelse(OC>OtoC_min,
-         ifelse(formcalc_raw$Intensity<Intensity_Max,
-        ifelse(formcalc_raw$Intensity>Intensity_Min,
-       ifelse(formcalc_raw$ExpMass<ExpMass_Max,
-      ifelse(formcalc_raw$ExpMass>ExpMass_Min,1
-     ,0),0),0),0),0),0)
+zahler1 <- zahler_1(formcalc_raw,
+                   Intensity_Max = L$limit['Right'],
+                   Intensity = formcalc_raw$Intensity, 
+                   OC = formcalc_raw$O/formcalc_raw$C)
+
 #________________________Zahler 2_________________________####
 #set DBEtoC_min & DBEtoC_max & OplusNtoC_max
-DBEtoC_min <- 0
-DBEtoC_max <- 5
-OplusNtoC_max <- 3
-zahler2 <- ifelse((1+0.5*(2*C-H+N))/C<DBEtoC_max,
-          ifelse((1+0.5*(2*C-H+N))/C>DBEtoC_min,
-         ifelse((O+N)/C<OplusNtoC_max,
-        ifelse(C>5,1
-       ,0),0),0),0)
+zahler2 <- zahler_2(formcalc_raw, DBEtoC_min = 0, DBEtoC_max = 5, OplusNtoC_max = 3)
+
 #________________________Zahler 3_________________________####
 #set AI min & max
-AI_max <- 1
-AI_min <- -20
-zahler3 <- ifelse((C-O-N)==0, 1,
-          ifelse(((1+C-O-0.5*H)/(C-O-N))<AI_max,
-         ifelse(((1+C-O-0.5*H)/(C-O-N))>AI_min,
-        ifelse(N/C<=NtoC_max,1
-       ,0),0),0))
+zahler3 <- zahler_3(formcalc_raw, AI_max = 1, AI_min = -20)
+
+attach(formcalc_raw)
 #________________________H/C charge condition:HCcc________####
 #set charge... I write this way to obtain a vector with the right length.
 charge <- ifelse(formcalc_raw$ExpMass!=0,-1,0)
 HCcc <- ifelse(Nregel*zahler1*zahler2*zahler3==1,
-    ifelse(charge==(-1),((H+1)/C),((H-1)/C))
+    ifelse(charge==(-1),((HIon+1)/C),((HIon-1)/C))
        ,0)
 #________________________H/C filtered: HCf________________####
 #set HC_min & HC_max
@@ -98,13 +67,13 @@ OCf <- ifelse(Nregel*zahler1*zahler2*zahler3==1,OC,0)
 NCf <- ifelse(Nregel*zahler1*zahler2*zahler3==1,NC,0)  
 #________________________DBE______________________________####
 dbe <- ifelse(HCf>0,
-      ifelse(Nregel*zahler1*zahler2*zahler3==1,(1+0.5*(2*C-H+N-1)),0)
+      ifelse(Nregel*zahler1*zahler2*zahler3==1,(1+0.5*(2*C-HIon+N-1)),0)
          ,0)
 #________________________AI_______________________________####
 AI <- ifelse((C-O-N-S)>0,
-     ifelse((1+C-O-0.5*(H+1)-S)>0,
+     ifelse((1+C-O-0.5*(HIon+1)-S)>0,
     ifelse(HCf>0,
-   ifelse(Nregel*zahler1*zahler2*zahler3==1,(1+C-O-0.5*(H+1)-S)/(C-O-N-S),0)
+   ifelse(Nregel*zahler1*zahler2*zahler3==1,(1+C-O-0.5*(HIon+1)-S)/(C-O-N-S),0)
          ,0),0),0)
 #________________________Xc_______________________________####
 #set m & n values
@@ -142,6 +111,7 @@ dfVK_filter <- subset(
                 OCf!=0),
               HCf!=0),
               NCf<1)
+detach(formcalc_raw)
 #____________________________Graph_1:Mass spectra_____________________####
  
 ggplot(formcalc_raw, aes(x=ExpMass, y=Intensity)) + 
@@ -264,7 +234,6 @@ ggplot(dfVK_filter, aes(x=nommass_COO, y=kmd_COO, color=mol_type, size=Intensity
   geom_point() + 
   scale_colour_manual(values=c("royalblue1", "darkorange1", "darkorange3",
                                "darkred", "red", "forestgreen"))
-
 
 
 
