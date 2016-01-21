@@ -13,7 +13,7 @@ filter_1 <- function(data,OtoC_min = 0, OtoC_max = 1, Intensity_Min=0,
     stop("You should insert Oxygen/Carbon data")
   }
   
-  filter_1 <- ifelse(OC<OtoC_max,
+  filter1 <- ifelse(OC<OtoC_max,
                     ifelse(OC>OtoC_min,
                            ifelse(formcalc_raw$Intensity<Intensity_Max,
                                   ifelse(formcalc_raw$Intensity>Intensity_Min,
@@ -21,6 +21,6 @@ filter_1 <- function(data,OtoC_min = 0, OtoC_max = 1, Intensity_Min=0,
                                                 ifelse(formcalc_raw$ExpMass>ExpMass_Min,1
                                                        ,0),0),0),0),0),0)
   
-  return (filter_1)
+  return (filter1)
   
 }
