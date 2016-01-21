@@ -1,4 +1,4 @@
-#' Compute Zahler 1 values
+#' Compute filter_1 values
 
 filter_1 <- function(data,OtoC_min = 0, OtoC_max = 1, Intensity_Min=0, 
                      Intensity_Max = 235000000, ExpMass_Min = 149, 
