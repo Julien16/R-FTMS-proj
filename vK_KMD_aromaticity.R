@@ -1,4 +1,4 @@
-#setwd("D:/Documents/R-FTMS-proj")
+# setwd("D:/Documents/R-FTMS-proj")
 formula_list <- read.table("C_634_FORMULAE.dat",skip=15,header=T)
 library(extremevalues)
 library(plyr)
